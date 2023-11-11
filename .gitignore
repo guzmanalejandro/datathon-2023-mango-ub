@@ -2,4 +2,5 @@
 datathon/images/*
 datathon/dataset/*.csv
 datathon.zip
+__pycache__/
 .venv
