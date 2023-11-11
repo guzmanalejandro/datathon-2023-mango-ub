@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import os
 
+# Plot all outfit images
 def plot_all_outfit_images(outfit_data, product_data):
     unique_outfits = outfit_data['cod_outfit'].unique()
     i = 0
@@ -34,9 +35,7 @@ def plot_all_outfit_images(outfit_data, product_data):
         else:
             break
 
-# Example Usage
-#plot_all_outfit_images(outfit_data, product_data)
-
+# Plot all outfit images for a given product
 def plot_outfits_for_similar_products(product_data, outfit_data, product_id):
     # Extract the left part of the product_id (before the hyphen)
     product_base_id = product_id.split('-')[0]
@@ -83,5 +82,26 @@ def plot_outfits_for_similar_products(product_data, outfit_data, product_id):
             plt.tight_layout()
             plt.show()
 
-# Example usage
-#plot_outfits_for_similar_products(product_data, outfit_data, "53030601-81")
+def get_single_outfit(outfit_data, product_data, outfit_id):
+    # Merge the outfit_data and product_data dataframes on cod_modelo_color
+    outfit_products_data = outfit_data[outfit_data['cod_outfit'] == outfit_id].merge(product_data, on='cod_modelo_color')
+
+    # Get the image paths for each product in the outfit
+    image_paths = outfit_products_data['des_filename'].tolist()
+
+    # Plot the images
+    fig, axes = plt.subplots(1, len(image_paths), figsize=(20, 10))
+    if len(image_paths) == 1:  # Handle case for single product
+        axes = [axes]
+
+    for ax, img_path in zip(axes, image_paths):
+        try:
+            img = Image.open(img_path)
+            ax.imshow(img)
+            ax.axis('off')
+        except FileNotFoundError:
+            ax.set_title("Image not found")
+            ax.axis('off')
+
+    plt.tight_layout()
+    plt.show()
