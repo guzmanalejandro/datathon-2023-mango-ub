@@ -35,7 +35,7 @@ def plot_all_outfit_images(outfit_data, product_data):
             break
 
 # Example Usage
-plot_all_outfit_images(outfit_data, product_data)
+#plot_all_outfit_images(outfit_data, product_data)
 
 def plot_outfits_for_similar_products(product_data, outfit_data, product_id):
     # Extract the left part of the product_id (before the hyphen)
