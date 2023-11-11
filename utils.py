@@ -35,9 +35,6 @@ def plot_all_outfit_images(outfit_data, product_data):
         else:
             break
 
-# Example Usage
-plot_all_outfit_images(outfit_data, product_data)
-
 # Plot all outfit images for a given product
 def plot_outfits_for_similar_products(product_data, outfit_data, product_id):
     # Extract the left part of the product_id (before the hyphen)
@@ -84,9 +81,6 @@ def plot_outfits_for_similar_products(product_data, outfit_data, product_id):
                     ax.axis('off')
             plt.tight_layout()
             plt.show()
-
-# Example usage
-#plot_outfits_for_similar_products(product_data, outfit_data, "53030601-81")
 
 def get_single_outfit(outfit_data, product_data, outfit_id):
     # Merge the outfit_data and product_data dataframes on cod_modelo_color
