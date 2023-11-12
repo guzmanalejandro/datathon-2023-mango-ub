@@ -30,7 +30,6 @@ Before running the demo, ensure you have the following installed:
 
 - Python 3.6 or higher
 - Streamlit
-- Other dependencies as specified in requirements.txt
 
 ## Clone the repository
 
