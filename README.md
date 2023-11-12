@@ -1,6 +1,5 @@
-# UPC Datathon 2023
-# Fashion Compatibility Challenge <img src="resources/icon.png" align="right" height=100/>
-
+# UPC Datathon 2023 - Fashionub
+# About our project
 ## Inspiration
 Our journey began at a datathon, where the challenge of fusing fashion with technology captured our imagination. Among various challenges, this one stood out as the most intriguing. We were inspired to simplify the daily dilemma of outfit selection, combining our passion for engineering with the art of style.
 
@@ -21,3 +20,40 @@ This project enhanced our skills in various domains, from machine learning and U
 
 ## What's next for Fashionub
 Looking ahead, we plan to enrich Fashionub with social media integration for style sharing, expand our style database for greater diversity, and create an AI-driven personal shopping assistant to further elevate the user experience.
+
+# How to run our demo
+Welcome to the Fashionub Streamlit demo! This guide will help you get started with running the demo on your local machine.
+
+## Prerequisites
+
+Before running the demo, ensure you have the following installed:
+
+- Python 3.6 or higher
+- Streamlit
+- Other dependencies as specified in requirements.txt
+
+## Clone the repository
+
+If you haven't already, clone the repository to your local machine:
+
+```python
+git clone https://github.com/guzmanalejandro/datathon-2023-mango-ub
+cd datathon-2023-mango-ub
+```
+
+## Running the demo
+o run the Streamlit demo, navigate to the directory containing deploy_streamlit.py and execute the following command in your terminal:
+
+```python
+streamlit run deploy_streamlit.py
+```
+
+Once the command is executed, Streamlit will start the application and automatically open it in your default web browser. If it doesn't open automatically, you can manually navigate to the provided local URL (usually http://localhost:8501).
+
+## Navigating the demo
+- The Streamlit interface is intuitive and user-friendly.
+- Use the sidebar to navigate between different pages of the demo.
+- Explore the functionalities of Fashionub, including outfit recommendations and style analysis.
+
+## Feedback
+We appreciate your feedback on the Fashionub Streamlit demo! If you have suggestions or encounter any issues, please feel free to reach out.
