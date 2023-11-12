@@ -52,7 +52,7 @@ Once the command is executed, Streamlit will start the application and automatic
 ## Navigating the demo
 - The Streamlit interface is intuitive and user-friendly.
 - Use the sidebar to navigate between different pages of the demo.
-- Explore the functionalities of Fashionub, including outfit recommendations and style analysis.
+- Explore the functionalities of Fashionub, now only including outfit recommendations.
 
 ## Feedback
 We appreciate your feedback on the Fashionub Streamlit demo! If you have suggestions or encounter any issues, please feel free to reach out.
