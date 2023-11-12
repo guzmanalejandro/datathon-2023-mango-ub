@@ -6,7 +6,7 @@ import recommender
 
 # Navbar
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Recommendations", "Data analysis"])
+page = st.sidebar.radio("Go to", ["Home", "Recommendations"])
 
 def home_page():
     import streamlit as st
@@ -32,8 +32,6 @@ def home_page():
     ### Our Mission
     Our mission is to blend fashion sense with cutting-edge technology, providing you with an exceptional outfit planning experience.
     """)
-    
-    
 
     st.markdown("---")
     st.markdown("© 2023 Outfit Recommendation App - All Rights Reserved")
@@ -42,6 +40,7 @@ def home_page():
 def recommendations_page():
     import streamlit as st
     import pandas as pd
+    import os
 
     selected_items = []
 
@@ -51,9 +50,13 @@ def recommendations_page():
         return path[5:]
     
     def construct_image_path(model_code):
-        path = "2019_" + model_code.replace('-', '_') + ".jpg"
-        full_path = f"datathon/images/{path}"
-        return full_path
+        base_path = "datathon/images/"
+        years = ["2019", "2023", "2024"]
+        for year in years:
+            path = os.path.join(base_path, f"{year}_{model_code.replace('-', '_')}.jpg")
+            if os.path.exists(path):
+                return path
+        return None
     
     # Reading data
     outfit_data = pd.read_csv('datathon/dataset/outfit_data.csv')
