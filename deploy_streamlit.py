@@ -61,12 +61,13 @@ def recommendations_page():
 
 def data_analysis():
 
+    # Mostrar la página/componente seleccionado
+    if page == "Home":
+        home_page()
+    elif page == "Recommendations":
+        recommendations_page()
+    elif page == "Data analysis":
+        data_analysis()
 
-# Mostrar la página/componente seleccionado
-if page == "Home":
-    home_page()
-elif page == "Recommendations":
-    recommendations_page()
-elif page == "Data analysis":
-    data_analysis()
+data_analysis()
 
