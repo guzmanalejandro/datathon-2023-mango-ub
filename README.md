@@ -1,5 +1,4 @@
 # UPC Datathon 2023 - Fashionub
-# About our project
 ## Inspiration
 Our journey began at a datathon, where the challenge of fusing fashion with technology captured our imagination. Among various challenges, this one stood out as the most intriguing. We were inspired to simplify the daily dilemma of outfit selection, combining our passion for engineering with the art of style.
 
