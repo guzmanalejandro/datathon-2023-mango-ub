@@ -27,14 +27,15 @@ def display_product_images(outfit_data):
 
 # Function to identify and exclude conflicting categories
 def exclude_conflicting_categories(outfit_items):
-    has_tshirt = any(item['des_product_family'] == 'T-shirt' for _, item in outfit_items.iterrows())
-    has_shirt = any(item['des_product_family'] == 'Shirt' for _, item in outfit_items.iterrows())
-
     excluded_categories = []
-    if has_tshirt:
-        excluded_categories.append('Shirts - Shirt')
-    if has_shirt:
-        excluded_categories.append('T-shirts - T-shirt')
+
+    # Exclude categories already present in the outfit
+    for _, item in outfit_items.iterrows():
+        category_type = determine_category_type(item)
+        if category_type in ['Top', 'Bottom', 'Outerwear']:
+            excluded_categories.append(item['des_product_family'])
+        elif category_type == 'Accessories' and item['des_product_family'] != 'Footwear':
+            excluded_categories.append(item['des_product_family'])
 
     return excluded_categories
 
@@ -50,6 +51,8 @@ def find_best_matching_category(cod_modelo_color_list, missing_categories, outfi
         'des_product_family', 'des_product_type'
     ]
 
+    print(f"\nMissing Categories: {missing_categories}")
+
     # Creating enriched descriptions for the outfit
     outfit_descriptions = outfit_items[description_columns].astype(str).agg(' '.join, axis=1)
 
@@ -57,17 +60,18 @@ def find_best_matching_category(cod_modelo_color_list, missing_categories, outfi
     tfidf = TfidfVectorizer(stop_words='english')
     outfit_vector = tfidf.fit_transform(outfit_descriptions)
 
+    priority_categories = ['Top', 'Bottom', 'Footwear']
+
     best_category = None
     highest_similarity = -1
 
-    # Iterate over missing categories to find the best match
     for category in missing_categories:
-        category_products = outfit_product_data[outfit_product_data['refined_category'] == category]
-        category_descriptions = category_products[description_columns].astype(str).agg(' '.join, axis=1)
+        categorized_products = outfit_product_data[outfit_product_data['category_type'] == category.split(' - ')[0]]
 
-        if category_descriptions.empty:
+        if categorized_products.empty or category.split(' - ')[0] not in priority_categories:
             continue
 
+        category_descriptions = categorized_products[description_columns].astype(str).agg(' '.join, axis=1)
         category_vector = tfidf.transform(category_descriptions)
         cosine_sim = cosine_similarity(outfit_vector, category_vector)
         average_similarity = np.mean(cosine_sim)
@@ -75,6 +79,22 @@ def find_best_matching_category(cod_modelo_color_list, missing_categories, outfi
         if average_similarity > highest_similarity:
             highest_similarity = average_similarity
             best_category = category
+
+    if best_category is None:
+        for category in missing_categories:
+            category_products = outfit_product_data[outfit_product_data['refined_category'] == category]
+            category_descriptions = category_products[description_columns].astype(str).agg(' '.join, axis=1)
+
+            if category_descriptions.empty:
+                continue
+
+            category_vector = tfidf.transform(category_descriptions)
+            cosine_sim = cosine_similarity(outfit_vector, category_vector)
+            average_similarity = np.mean(cosine_sim)
+
+            if average_similarity > highest_similarity:
+                highest_similarity = average_similarity
+                best_category = category
 
     return best_category
 
@@ -119,18 +139,13 @@ def recommend_product_for_outfit(cod_modelo_color_list, category_to_add, outfit_
 
 # Main function to run the process with iterative recommendations
 def process_outfit_recommendation(cod_modelo_color_list, num_recommendations=1):
-    # Load the product data
-    outfit_data = pd.read_csv('datathon/dataset/outfit_data.csv')
-    product_data = pd.read_csv('datathon/dataset/product_data.csv')
-
     # Merging outfit data with product data to get detailed attributes of products in outfits
     outfit_product_data = outfit_data.merge(product_data, on='cod_modelo_color', how='left')
 
     # Apply this function to create a new 'refined_category' column
     outfit_product_data['refined_category'] = outfit_product_data.apply(create_refined_category, axis=1)
 
-    # Apply this function to create a new 'category_type' column in the outfit_product_data
-    outfit_product_data['category_type'] = outfit_product_data.apply(determine_category_type, axis=1)
+    outfit_product_data['category_type'] = outfit_product_data.apply(categorize_product, axis=1)
 
     # Filter the product data to only include the provided cod_modelo_color items
     outfit_items = outfit_product_data[outfit_product_data['cod_modelo_color'].isin(cod_modelo_color_list)]
@@ -161,27 +176,24 @@ def process_outfit_recommendation(cod_modelo_color_list, num_recommendations=1):
         # Get categories to exclude
         excluded_categories = exclude_conflicting_categories(outfit_items)
 
-        # Adjust missing categories based on missing types
+        # Adjust the refined categories to ensure unique recommendations
         refined_categories = set()
         for category in missing_types:
-            if category == 'Top':
-                refined_categories.update(outfit_product_data[outfit_product_data['category_type'] == 'Top']['refined_category'])
-            elif category == 'Bottom':
-                refined_categories.update(outfit_product_data[outfit_product_data['category_type'] == 'Bottom']['refined_category'])
-            elif category == 'Accessories':
-                refined_categories.update(outfit_product_data[outfit_product_data['category_type'] == 'Accessories']['refined_category'])
-            elif category == 'Footwear':
-                refined_categories.update(outfit_product_data[outfit_product_data['category_type'] == 'Footwear']['refined_category'])
-            elif category == 'Outerwear':
-                refined_categories.update(outfit_product_data[outfit_product_data['category_type'] == 'Outerwear']['refined_category'])
+            category_specific_products = outfit_product_data[outfit_product_data['category_type'] == category]
+            for _, product in category_specific_products.iterrows():
+                if product['des_product_family'] not in excluded_categories:
+                    refined_category = create_refined_category(product)
+                    refined_categories.add(refined_category)
 
+        print(f"\nRefined Categories: {refined_categories}")
+        # Removing excluded categories
         refined_categories -= set(excluded_categories)
 
         # Find the best matching category using TF-IDF
         best_matching_category = find_best_matching_category(cod_modelo_color_list, refined_categories, outfit_product_data)
-        print(f"\nIdentified Best Matching Category: {best_matching_category}") 
+
+        print(f"\nBest Matching Category: {best_matching_category}")
         if best_matching_category:
-            print(f"\nIdentified Best Matching Category: {best_matching_category}")
 
             # Recommend a product in the selected missing category
             recommended_product = recommend_product_for_outfit(cod_modelo_color_list, best_matching_category, outfit_product_data)
@@ -212,34 +224,50 @@ def process_outfit_recommendation(cod_modelo_color_list, num_recommendations=1):
 
 # Function to determine the category type (Top, Bottom, etc.) based on the product family
 def determine_category_type(row):
-    top_categories = ['Tops', 'Shirts', 'T-shirts', 'Sweaters and Cardigans', 'Poloshirts']
-    bottom_categories = ['Bottoms', 'Trousers & leggings', 'Jeans', 'Skirts and shorts', 'Leggings and joggers']
-    footwear_categories = ['Footwear']
-    accessories_categories = ['Accesories, Swim and Intimate', 'Accessories', 'Jewellery', 'Bags', 'Glasses', 'Wallets & cases', 'Belts and Ties', 'Hats, scarves and gloves']
-    outerwear_categories = ['Outerwear', 'Jackets and Blazers', 'Coats and Parkas', 'Trenchcoats', 'Puffer coats', 'Leather jackets', 'Parkas']
+    # Define categories based on the hierarchy
+    top_categories = ['Tops']
+    bottom_categories = ['Bottoms']
+    outerwear_categories = ['Outerwear']
+    accessory_aggregated_families = ['Accessories']
+    footwear_family = ['Footwear']
 
-    if row['des_product_category'] in top_categories or row['des_product_aggregated_family'] in top_categories or row['des_product_family'] in top_categories:
+    if row['des_product_category'] in top_categories:
         return 'Top'
-    elif row['des_product_category'] in bottom_categories or row['des_product_aggregated_family'] in bottom_categories or row['des_product_family'] in bottom_categories:
+    elif row['des_product_category'] in bottom_categories:
         return 'Bottom'
-    elif row['des_product_category'] in footwear_categories or row['des_product_aggregated_family'] in footwear_categories:
-        return 'Footwear'
-    elif any(cat in row['des_product_category'] for cat in accessories_categories) or \
-         any(cat in row['des_product_aggregated_family'] for cat in accessories_categories) or \
-         any(cat in row['des_product_family'] for cat in accessories_categories):
-        return 'Accessories'
-    elif any(cat in row['des_product_category'] for cat in outerwear_categories) or \
-         any(cat in row['des_product_aggregated_family'] for cat in outerwear_categories) or \
-         any(cat in row['des_product_family'] for cat in outerwear_categories):
+    elif row['des_product_category'] in outerwear_categories:
         return 'Outerwear'
+    elif row['des_product_aggregated_family'] in accessory_aggregated_families:
+        if row['des_product_family'] in footwear_family:
+            return 'Footwear'
+        else:
+            return 'Accessories'
     else:
         return 'Other'
     
 def identify_missing_category_types(outfit_items):
     existing_types = set(outfit_items.apply(determine_category_type, axis=1))
     all_types = {'Top', 'Bottom', 'Footwear', 'Accessories', 'Outerwear'}
+
+    # Handle Accessories and Footwear to allow multiple items but avoid duplicates
+    accessory_items = outfit_items[outfit_items['category_type'] == 'Accessories']
+    if not accessory_items.empty:
+        existing_types.remove('Accessories')
+        accessory_subcategories = set(accessory_items['des_product_family'])
+        if 'Footwear' in accessory_subcategories:
+            existing_types.add('Footwear')
+
     return all_types - existing_types
 
 # Define a function to create a refined category
 def create_refined_category(row):
     return f"{row['des_product_aggregated_family']} - {row['des_product_family']}"
+
+def categorize_product(row):
+    if row['des_product_category'] == 'Tops' or row['des_product_aggregated_family'] in ['Shirts', 'T-shirts']:
+        return 'Top'
+    elif row['des_product_category'] == 'Bottoms' or row['des_product_aggregated_family'] in ['Trousers & leggings', 'Skirts and shorts', 'Jeans']:
+        return 'Bottom'
+    elif row['des_product_category'] == 'Accesories, Swim and Intimate' and row['des_product_family'] == 'Footwear':
+        return 'Footwear'
+    return 'Other'
